@@ -13,6 +13,21 @@ const INVESTIGATION_TYPES = [
 
 const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT
 
+function toInvestigationLabel(value: string) {
+  const labelMap: Record<string, string> = {
+    recent_cloudtrail_events: "Recent AWS Activity",
+    failed_console_logins: "Failed Console Logins",
+    suspicious_iam_activity: "Suspicious IAM Activity",
+    ec2_instance_creation_activity: "EC2 Instance Creation Activity",
+    ec2_security_group_changes: "EC2 Security Group Changes",
+    root_account_activity: "Root Account Activity",
+    new_access_keys_created: "New Access Keys Created",
+    failed_api_calls: "Failed API Calls",
+  }
+
+  return labelMap[value] || value
+}
+
 type InvestigationDetail = Record<string, string>
 
 type InvestigationResponse = {
@@ -28,6 +43,20 @@ type InvestigationResponse = {
 }
 
 function toLabel(key: string) {
+  const labelMap: Record<string, string> = {
+    time_dt: "Time",
+    operation: "Operation",
+    ip: "IP Address",
+    name: "User",
+    status: "Status",
+    accountid: "Account ID",
+    region: "Region",
+    error: "Error",
+    message: "Message",
+  }
+
+  if (labelMap[key]) return labelMap[key]
+
   const normalized = key.replace(/_/g, " ")
   return normalized.charAt(0).toUpperCase() + normalized.slice(1)
 }
@@ -103,7 +132,7 @@ export default function ThreatHuntingDashboard() {
             >
               {INVESTIGATION_TYPES.map((type) => (
                 <option key={type} value={type}>
-                  {type}
+                  {toInvestigationLabel(type)}
                 </option>
               ))}
             </select>
@@ -126,7 +155,6 @@ export default function ThreatHuntingDashboard() {
               type="text"
               value={ipAddress}
               onChange={(e) => setIpAddress(e.target.value)}
-              placeholder="45.85.145.66"
               className="w-full rounded-2xl bg-slate-800 border border-slate-700 px-4 py-3"
             />
           </div>
@@ -137,7 +165,6 @@ export default function ThreatHuntingDashboard() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
               className="w-full rounded-2xl bg-slate-800 border border-slate-700 px-4 py-3"
             />
           </div>
@@ -145,7 +172,6 @@ export default function ThreatHuntingDashboard() {
 
         <div className="flex items-center justify-between gap-4">
           <div className="text-sm text-slate-500 break-all">
-            Update <code className="bg-slate-900 px-2 py-1 rounded">API_ENDPOINT</code> with your real API Gateway invoke URL.
           </div>
 
           <button
@@ -233,7 +259,7 @@ export default function ThreatHuntingDashboard() {
                   <tr key={index} className="border-b border-slate-800/60">
                     {columns.map((column) => (
                       <td key={column} className="py-3 pr-4 text-slate-300 align-top whitespace-nowrap">
-                        {detail[column] || "-"}
+                        {detail[column] || "N/A"}
                       </td>
                     ))}
                   </tr>
