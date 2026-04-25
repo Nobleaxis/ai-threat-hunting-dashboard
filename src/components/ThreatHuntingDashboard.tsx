@@ -137,7 +137,7 @@ export default function ThreatHuntingDashboard() {
       <div className="max-w-7xl mx-auto space-y-6">
 
         <div>
-          <h1 className="text-4xl font-bold">AI Threat Hunting Dashboard</h1>
+          <h1 className="text-4xl font-bold">Nobleaxis AI Threat Hunting Dashboard</h1>
           <p className="text-slate-400 mt-2">
             Investigate AWS activity through your threat hunting API.
           </p>
