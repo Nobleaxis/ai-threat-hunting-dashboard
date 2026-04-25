@@ -91,6 +91,9 @@ export default function ThreatHuntingDashboard() {
   }, [response, visibleCount])
 
   const detailsCount = response?.details?.length ?? 0
+  const totalEventsCount = response?.statistics?.total_events ?? detailsCount
+  const hasMoreThanTenEvents = totalEventsCount > 10
+  const hasHiddenRows = detailsCount > 10 && visibleCount < detailsCount
 
   const columns = useMemo(() => {
     if (!response?.details?.length) return []
@@ -314,23 +317,28 @@ export default function ThreatHuntingDashboard() {
             </tbody>
           </table>
 
-          {detailsCount > 10 && (
-            <div className="mt-6 flex justify-center">
-              {visibleCount < detailsCount ? (
+          {hasMoreThanTenEvents && (
+            <div className="mt-6 flex flex-col items-start gap-2">
+              {hasHiddenRows ? (
                 <button
-                  onClick={() => setVisibleCount((count) => count + 10)}
+                  onClick={() => setVisibleCount(detailsCount)}
                   className="dashboard-secondary-button px-5 py-2.5 rounded-2xl text-sm font-medium transition"
                 >
-                  Show More
+                  See More
                 </button>
-              ) : (
+              ) : detailsCount > 10 ? (
                 <button
                   onClick={() => setVisibleCount(10)}
                   className="dashboard-secondary-button px-5 py-2.5 rounded-2xl text-sm font-medium transition"
                 >
                   Show Less
                 </button>
-              )}
+              ) : null}
+              {detailsCount <= 10 && totalEventsCount > detailsCount ? (
+                <p className="dashboard-muted text-sm">
+                  Showing {detailsCount} of {totalEventsCount} events. The API response only included these rows.
+                </p>
+              ) : null}
             </div>
           )}
         </div>
