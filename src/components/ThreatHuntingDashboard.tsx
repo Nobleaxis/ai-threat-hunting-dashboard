@@ -2,7 +2,6 @@ import { useMemo, useState } from "react"
 import ThemeSwitcher from "./ThemeSwitcher"
 import { useAuth } from "react-oidc-context"
 
-
 const INVESTIGATION_TYPES = [
   "recent_cloudtrail_events",
   "failed_console_logins",
@@ -15,6 +14,7 @@ const INVESTIGATION_TYPES = [
 ]
 
 const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT
+const SIGNED_OUT_STORAGE_KEY = "threat-hunting-dashboard-signed-out"
 
 function toInvestigationLabel(value: string) {
   const labelMap: Record<string, string> = {
@@ -142,6 +142,11 @@ export default function ThreatHuntingDashboard() {
     }
   }
 
+  async function signOut() {
+    window.localStorage.setItem(SIGNED_OUT_STORAGE_KEY, "true")
+    await auth.removeUser()
+  }
+
   return (
     <div className="dashboard-shell min-h-screen p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -153,7 +158,16 @@ export default function ThreatHuntingDashboard() {
               Investigate AWS activity through your threat hunting API.
             </p>
           </div>
-          <ThemeSwitcher />
+          <div className="dashboard-header-actions">
+            <ThemeSwitcher />
+            <button
+              type="button"
+              onClick={signOut}
+              className="dashboard-secondary-button px-4 py-2 rounded-xl text-sm font-medium transition"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
 
         <div className="dashboard-card grid grid-cols-1 md:grid-cols-4 gap-4 p-6 rounded-3xl">
