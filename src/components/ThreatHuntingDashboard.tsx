@@ -37,6 +37,9 @@ type InvestigationResponse = {
   status: "success" | "error"
   prompt?: string
   investigation_type: string
+  days?: string
+  ip_address?: string
+  username?: string
   summary: string
   details: InvestigationDetail[]
   statistics: {
@@ -106,6 +109,26 @@ export default function ThreatHuntingDashboard() {
     return Object.keys(response.details[0])
   }, [response])
 
+  async function executeInvestigation(payload: Record<string, string>) {
+    const res = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.user?.access_token}`,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok || data.status === "error") {
+      throw new Error(data.summary || data.message || "Investigation request failed.")
+    }
+
+    setResponse(data)
+    setVisibleCount(10)
+  }
+
   async function runInvestigation() {
     setLoading(true)
     setError("")
@@ -131,23 +154,7 @@ export default function ThreatHuntingDashboard() {
         if (username.trim()) payload.username = username.trim()
       }
 
-      const res = await fetch(API_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.user?.access_token}`,
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok || data.status === "error") {
-        throw new Error(data.summary || data.message || "Investigation request failed.")
-      }
-
-      setResponse(data)
-      setVisibleCount(10)
+      await executeInvestigation(payload)
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error occurred."
       setError(message)
@@ -156,6 +163,62 @@ export default function ThreatHuntingDashboard() {
       setLoading(false)
     }
   }
+
+  async function runInvestigationForIp(ip: string) {
+    const cleanIp = ip.trim()
+    if (!cleanIp || cleanIp === "N/A") return
+
+    setQueryMode("structured")
+    setIpAddress(cleanIp)
+    setUsername("")
+    setInvestigationType(response?.investigation_type || investigationType)
+    setDays(response?.days || days || "7")
+    setLoading(true)
+    setError("")
+
+    try {
+      await executeInvestigation({
+        investigation_type: response?.investigation_type || investigationType,
+        days: response?.days || days || "7",
+        ip_address: cleanIp,
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error occurred."
+      setError(message)
+      setResponse(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+
+  async function runInvestigationForUser(user: string) {
+    const cleanUser = user.trim()
+    if (!cleanUser || cleanUser === "N/A") return
+
+    setQueryMode("structured")
+    setUsername(cleanUser)
+    setIpAddress("")
+    setInvestigationType(response?.investigation_type || investigationType)
+    setDays(response?.days || days || "7")
+    setLoading(true)
+    setError("")
+
+    try {
+      await executeInvestigation({
+        investigation_type: response?.investigation_type || investigationType,
+        days: response?.days || days || "7",
+        username: cleanUser,
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error occurred."
+      setError(message)
+      setResponse(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
 
   async function signOut() {
     window.localStorage.setItem(SIGNED_OUT_STORAGE_KEY, "true")
@@ -216,30 +279,6 @@ export default function ThreatHuntingDashboard() {
                 placeholder="Example: Show failed API calls from IP 45.85.145.66 in the last 7 days"
                 className="dashboard-field w-full min-h-28 rounded-2xl px-4 py-3"
               />
-
-              <div className="mt-3 text-sm space-y-1">
-                <p className="dashboard-muted">Try:</p>
-
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "Show failed API calls in the last 24 hours",
-                    "Show EC2 instances created recently",
-                    "Show suspicious IAM activity",
-                  ].map((example) => (
-                    <button
-                      key={example}
-                      type="button"
-                      onClick={() => setNaturalLanguageQuery(example)}
-                      className="dashboard-secondary-button px-3 py-1.5 rounded-xl text-xs"
-                    >
-                      {example}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-
-
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -322,25 +361,9 @@ export default function ThreatHuntingDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="dashboard-card lg:col-span-2 rounded-3xl p-6">
             <h2 className="text-xl font-semibold mb-4">Summary of Findings</h2>
-            {response?.prompt && (
-              <div className="mb-3 space-y-2">
-                <p className="dashboard-muted text-sm">
-                  Query: {response.prompt}
-                </p>
-
-                <p className="text-sm text-purple-300">
-                  Interpreted as: {toInvestigationLabel(response.investigation_type)}
-                </p>
-
-                <div className="flex flex-wrap gap-3 text-xs dashboard-muted">
-                  <span>Time Range: Last {days} day(s)</span>
-
-                  {ipAddress && <span>IP: {ipAddress}</span>}
-
-                  {username && <span>User: {username}</span>}
-                </div>
-              </div>
-            )}
+            {response?.prompt ? (
+              <p className="dashboard-muted text-sm mb-3">Query: {response.prompt}</p>
+            ) : null}
             <p className="dashboard-body-text">
               {response?.summary || "No investigation has been run yet."}
             </p>
@@ -413,6 +436,24 @@ export default function ThreatHuntingDashboard() {
                           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeClass(detail[column])}`}>
                             {detail[column] || "N/A"}
                           </span>
+                        ) : column === "ip" && detail[column] ? (
+                          <button
+                            type="button"
+                            onClick={() => runInvestigationForIp(detail[column])}
+                            className="text-blue-300 hover:text-blue-200 hover:underline font-medium"
+                            title="Run this investigation filtered by this IP"
+                          >
+                            {detail[column]}
+                          </button>
+                        ) : column === "name" && detail[column] ? (
+                          <button
+                            type="button"
+                            onClick={() => runInvestigationForUser(detail[column])}
+                            className="text-emerald-300 hover:text-emerald-200 hover:underline font-medium"
+                            title="Run this investigation filtered by this user"
+                          >
+                            {detail[column]}
+                          </button>
                         ) : (
                           detail[column] || "N/A"
                         )}
