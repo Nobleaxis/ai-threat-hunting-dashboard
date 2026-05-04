@@ -149,8 +149,6 @@ export default function ThreatHuntingDashboard() {
   const aiRecommendation = getRecommendationFromAnalysis(response?.anomaly_analysis)
 
 
-
-
   async function executeInvestigation(payload: Record<string, string>) {
     const res = await fetch(API_ENDPOINT, {
       method: "POST",
