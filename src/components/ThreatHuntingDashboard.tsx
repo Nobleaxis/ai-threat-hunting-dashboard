@@ -96,6 +96,15 @@ function getSeverityFromAnalysis(analysis?: string) {
   return null
 }
 
+
+function getRecommendationFromAnalysis(analysis?: string) {
+  if (!analysis) return null
+
+  const match = analysis.match(/Recommendation:\s*(.*)/i)
+
+  return match ? match[1] : null
+}
+
 function getSeverityBadgeClass(severity: string) {
   if (severity === "High") {
     return "bg-rose-500/15 text-rose-300 border border-rose-500/30"
@@ -137,6 +146,7 @@ export default function ThreatHuntingDashboard() {
 
 
   const severity = getSeverityFromAnalysis(response?.anomaly_analysis)
+  const aiRecommendation = getRecommendationFromAnalysis(response?.anomaly_analysis)
 
 
 
@@ -442,14 +452,18 @@ export default function ThreatHuntingDashboard() {
           )}
 
           <h2 className="text-xl font-semibold mb-4">Recommended Actions</h2>
-          <ul className="dashboard-body-text space-y-3 list-disc list-inside">
-            {(response?.recommended_actions?.length
-              ? response.recommended_actions
-              : ["Run an investigation to see recommended actions."]
-            ).map((action) => (
-              <li key={action}>{action}</li>
-            ))}
-          </ul>
+
+          {aiRecommendation ? (
+            <ul className="list-disc list-inside space-y-2 dashboard-body-text">
+              <li>{aiRecommendation}</li>
+            </ul>
+          ) : (
+            <ul className="list-disc list-inside space-y-2 dashboard-body-text">
+              {response?.recommended_actions?.map((action, idx) => (
+                <li key={idx}>{action}</li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="dashboard-card rounded-3xl p-6 overflow-x-auto">
