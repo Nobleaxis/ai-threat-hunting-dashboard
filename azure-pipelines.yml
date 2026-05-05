@@ -1,0 +1,21 @@
+trigger:
+- main   # or master depending on your branch
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- checkout: self
+  persistCredentials: true
+
+- script: |
+    echo "Setting up Git identity..."
+    git config --global user.email "pipeline@azure.com"
+    git config --global user.name "azure-pipeline"
+
+    echo "Adding Azure Repo remote..."
+    git remote add azure https://$(AZURE_USERNAME):$(AZURE_PAT)@dev.azure.com/thenobleaxis/AI%20Threat%20Hunting/_git/AI%20Threat%20Hunting
+
+    echo "Pushing code to Azure Repo..."
+    git push azure HEAD:main --force
+  displayName: 'Sync GitHub to Azure Repo'
