@@ -421,7 +421,7 @@ export default function ThreatHuntingDashboard() {
               </div>
 
               <div className="dashboard-surface rounded-2xl p-4">
-                <div className="dashboard-label text-sm">Unique IPs</div>
+                <div className="dashboard-label text-sm">Unique IP Addresses</div>
                 <div className="text-3xl font-bold mt-1">
                   {response?.statistics?.unique_ips ?? 0}
                 </div>
