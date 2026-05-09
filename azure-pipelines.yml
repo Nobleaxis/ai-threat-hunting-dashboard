@@ -14,7 +14,7 @@ steps:
     git config --global user.name "azure-pipeline"
 
     echo "Adding Azure Repo remote..."
-    git remote add azure https://$(AZURE_USERNAME):$(AZURE_PAT)@dev.azure.com/thenobleaxis/AI%20Threat%20Hunting/_git/AI%20Threat%20Hunting
+    git remote add azure https://$(AZURE_PAT)@dev.azure.com/thenobleaxis/AI%20Threat%20Hunting/_git/AI%20Threat%20Hunting
 
     echo "Pushing code to Azure Repo..."
     git push azure HEAD:main --force
